@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equivalent PD Settling: Linear Mass vs. Torsional Pendulum</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --secondary: #f43f5e;
+            --border: #334155;
+            --accent: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-math-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: #020617;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Scrubbing Bar Section */
+        .timeline-section {
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .timeline-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Control Sliders & Buttons */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .param-name {
+            font-weight: 500;
+        }
+
+        .param-value {
+            font-family: monospace;
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        #scrubber::-webkit-slider-thumb {
+            background: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--primary);
+            color: #020617;
+            border: none;
+            padding: 8px 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        button.secondary {
+            background: #334155;
+            color: var(--text);
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* HTML/CSS LaTeX-style badges */
+        .math-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-family: "Georgia", "Cambria", "Times New Roman", Times, serif;
+            font-size: 0.95rem;
+            background: #0f172a;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            color: #e2e8f0;
+        }
+
+        .math-expr {
+            font-style: italic;
+            letter-spacing: 0.02em;
+        }
+
+        .math-expr sub {
+            font-size: 0.7em;
+            font-style: normal;
+            margin-left: -0.05em;
+            vertical-align: -0.2em;
+            line-height: 0;
+        }
+
+        .math-divider {
+            color: var(--text-muted);
+            font-family: sans-serif;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Linear & Rotational Equivalence: Spring-Damper Settling</h1>
+        <div class="header-math-container">
+            <div class="math-badge">
+                <span class="math-expr">F<sub>total</sub> = F<sub>p</sub> + F<sub>d</sub></span>
+            </div>
+            <span class="math-divider">is mathematically identical to</span>
+            <div class="math-badge">
+                <span class="math-expr">τ<sub>total</sub> = τ<sub>p</sub> + τ<sub>d</sub></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="canvas-container">
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <!-- Timeline / Manual Scroll Section -->
+    <div class="timeline-section">
+        <div class="btn-group">
+            <button id="btnPlay">Pause</button>
+            <button id="btnReset" class="secondary">Reset</button>
+        </div>
+        <div class="timeline-container">
+            <div class="timeline-label">
+                <span id="timeReadout">t = 0.00s / 60.00s</span>
+            </div>
+            <input type="range" id="scrubber" min="0" max="1000" value="0">
+        </div>
+    </div>
+
+    <!-- Physical / Control Parameters -->
+    <div class="controls">
+        <div class="control-group">
+            <div class="label-row">
+                <span class="param-name">Stiffness (K)</span>
+                <span class="param-value" id="valKp">10.0</span>
+            </div>
+            <input type="range" id="sliderKp" min="0" max="150" step="1" value="10">
+            <div class="math-badge">
+              <span class="math-expr">F<sub>p</sub> = k·(x<sub>setpoint</sub> − x<sub>actual</sub>)</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="label-row">
+                <span class="param-name">Damping (c)</span>
+                <span class="param-value" id="valKd">2.0</span>
+            </div>
+            <input type="range" id="sliderKd" min="0" max="15" step="0.1" value="2">
+            <div class="math-badge">
+              <span class="math-expr">F<sub>d</sub> = −c·v<sub>actual</sub></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sliderKp = document.getElementById('sliderKp');
+    const sliderKd = document.getElementById('sliderKd');
+    const scrubber = document.getElementById('scrubber');
+    const valKp = document.getElementById('valKp');
+    const valKd = document.getElementById('valKd');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnReset = document.getElementById('btnReset');
+    const timeReadout = document.getElementById('timeReadout');
+
+    // Physical & Simulation Constants
+    const m = 1.0;            // Mass (kg) / Inertia (I)
+    const totalTime = 60.0;   // Extended to 1 minute
+    const dt = 0.01;          // Time step (100 Hz simulation resolution)
+    const totalSteps = Math.floor(totalTime / dt);
+    const setpoint = 1.0;
+
+    let Kp = parseFloat(sliderKp.value);
+    let Kd = parseFloat(sliderKd.value);
+    let isPlaying = true;
+    let currentStep = 0;
+
+    // Float tracker to allow for fractional playback speeds
+    let exactStep = 0;
+    const playbackSpeed = 0.5; // 0.5 = Half speed. Change to 0.25 for quarter speed, etc.
+
+    // Pre-allocated array for fixed time window trajectories
+    let trajectory = new Array(totalSteps);
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Recompute full trajectory via RK4 whenever parameters change
+    function recomputeTrajectory() {
+        let pos = 0.0;
+        let vel = 0.0;
+
+        for (let i = 0; i < totalSteps; i++) {
+            const e = setpoint - pos;
+            const Fp = Kp * e;
+            const Fd = -Kd * vel;
+            const Ftotal = Fp + Fd;
+
+            // Store state and dynamic forces for visualization
+            trajectory[i] = { p: pos, v: vel, Fp, Fd, Ftotal };
+
+            // RK4 Numerical Integration Step
+            const derivatives = (p, v) => {
+                const err = setpoint - p;
+                const accel = (Kp * err - Kd * v) / m;
+                return { dPos: v, dVel: accel };
+            };
+
+            const k1 = derivatives(pos, vel);
+            const k2 = derivatives(pos + 0.5 * dt * k1.dPos, vel + 0.5 * dt * k1.dVel);
+            const k3 = derivatives(pos + 0.5 * dt * k2.dPos, vel + 0.5 * dt * k2.dVel);
+            const k4 = derivatives(pos + dt * k3.dPos, vel + dt * k3.dVel);
+
+            pos += (dt / 6) * (k1.dPos + 2 * k2.dPos + 2 * k3.dPos + k4.dPos);
+            vel += (dt / 6) * (k1.dVel + 2 * k2.dVel + 2 * k3.dVel + k4.dVel);
+        }
+    }
+
+    // UI Event Listeners
+    sliderKp.addEventListener('input', (e) => {
+        Kp = parseFloat(e.target.value);
+        valKp.textContent = Kp.toFixed(1);
+        recomputeTrajectory();
+    });
+
+    sliderKd.addEventListener('input', (e) => {
+        Kd = parseFloat(e.target.value);
+        valKd.textContent = Kd.toFixed(1);
+        recomputeTrajectory();
+    });
+
+    scrubber.addEventListener('input', (e) => {
+        const progress = parseFloat(e.target.value) / 1000;
+        currentStep = Math.floor(progress * (totalSteps - 1));
+        exactStep = currentStep; // Sync float tracker
+        isPlaying = false;
+        btnPlay.textContent = 'Play';
+    });
+
+    btnPlay.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        btnPlay.textContent = isPlaying ? 'Pause' : 'Play';
+        if (isPlaying && currentStep >= totalSteps - 1) {
+            currentStep = 0;
+            exactStep = 0;
+        }
+    });
+
+    btnReset.addEventListener('click', () => {
+        currentStep = 0;
+        exactStep = 0;
+        isPlaying = true;
+        btnPlay.textContent = 'Pause';
+    });
+
+    // Drawing Helpers for Physical Models
+    function drawSpring(ctx, x, yTop, yBottom) {
+        const coils = 12;
+        const w = 15;
+        const pad = 10;
+        const startY = yTop + pad;
+        const endY = yBottom - pad;
+        const dy = (endY - startY) / coils;
+
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x, yTop);
+        ctx.lineTo(x, startY);
+
+        for (let i = 0; i < coils; i++) {
+            const sign = (i % 2 === 0) ? 1 : -1;
+            ctx.lineTo(x + sign * w, startY + i * dy + dy / 2);
+        }
+        ctx.lineTo(x, endY);
+        ctx.lineTo(x, yBottom);
+        ctx.stroke();
+    }
+
+    function drawPendulum(ctx, pivotX, pivotY, errorPercent, length) {
+        const angle = -errorPercent * (Math.PI / 2.5);
+
+        ctx.strokeStyle = '#ef4444';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.lineTo(pivotX, pivotY + length + 25);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(pivotX, pivotY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        const bobX = pivotX + length * Math.sin(angle);
+        const bobY = pivotY + length * Math.cos(angle);
+
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.lineTo(bobX, bobY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(bobX, bobY, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Rotational', pivotX, pivotY - 20);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Equivalent', pivotX, pivotY - 8);
+    }
+
+    function draw() {
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const marginLeft = 380;
+        const marginRight = 50; // Increased slightly for the 60.0s label
+        const graphWidth = width - marginLeft - marginRight;
+        const graphHeight = height - 100;
+
+        const yScale = graphHeight / 1.8;
+        const yZero = height - 50 - (0.2 * yScale);
+        const yTarget = yZero - (setpoint * yScale);
+
+        const state = trajectory[currentStep] || trajectory[0];
+
+        // --- 1. DRAW GRAPH AXES & GUIDES ---
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.moveTo(20, yZero);
+        ctx.lineTo(width - marginRight + 10, yZero);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ef4444';
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(20, yTarget);
+        ctx.lineTo(width - marginRight + 10, yTarget);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '12px monospace';
+        ctx.fillText('Target (x=1.0, θ=0)', marginLeft, yTarget - 8);
+
+        // --- DYNAMIC GRAPH SCALING ---
+        // Minimum view window is 10s. If simulation goes beyond 10s, scale dynamically up to 60s
+        const currentT = currentStep * dt;
+        const viewTime = Math.max(10.0, currentT);
+        const viewSteps = viewTime / dt;
+        const maxDrawStep = Math.min(totalSteps, Math.ceil(viewSteps));
+
+        // --- 2. DRAW GRAPH TRAJECTORY ---
+        // Draw the predicted gray line up to the bounds of the current view window
+        ctx.beginPath();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i <= maxDrawStep; i++) {
+            const x = marginLeft + (i / viewSteps) * graphWidth;
+            const y = yZero - (trajectory[i].p * yScale);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Draw the active blue trajectory
+        if (currentStep > 0) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+
+            for (let i = 0; i <= currentStep; i++) {
+                const x = marginLeft + (i / viewSteps) * graphWidth;
+                const y = yZero - (trajectory[i].p * yScale);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            const currentX = marginLeft + (currentStep / viewSteps) * graphWidth;
+            const currentY = yZero - (state.p * yScale);
+
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Position Response', marginLeft - 10, yTarget - 25);
+        ctx.fillText('0.0s', marginLeft, yZero + 20);
+
+        // Dynamically update the right-side label based on the current scale
+        ctx.textAlign = 'right';
+        ctx.fillText(`${viewTime.toFixed(1)}s`, width - marginRight + 10, yZero + 20);
+        ctx.textAlign = 'left'; // Reset
+
+        // --- 3. DRAW PHYSICAL SYSTEMS (Left Side) ---
+        const massY = yZero - (state.p * yScale);
+        const massHeight = 24;
+        const massWidth = 60;
+
+        const linearCenterX = 70;
+        const rotationalCenterX = 180;
+
+        drawSpring(ctx, linearCenterX, yTarget, massY - massHeight/2);
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(linearCenterX - massWidth/2, massY - massHeight/2, massWidth, massHeight);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(linearCenterX - massWidth/2, massY - massHeight/2, massWidth, massHeight);
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Linear', linearCenterX, massY - 2);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Mass', linearCenterX, massY + 10);
+
+        const pendulumLength = (yZero - yTarget) * 0.9;
+        const errorPercent = setpoint - state.p;
+        drawPendulum(ctx, rotationalCenterX, yTarget, errorPercent, pendulumLength);
+
+        // --- 4. DRAW FORCE VECTORS (Free Body Diagram) ---
+        ctx.textAlign = 'left';
+        ctx.font = '12px monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`Stiffness force (throttle) = ${state.Fp.toFixed(1)}`, 20, 25);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillText(`Damping force (brakes) = ${state.Fd.toFixed(1)}`, 20, 45);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`Net Total = ${state.Ftotal.toFixed(1)}`, 20, 65);
+    }
+
+    recomputeTrajectory();
+
+    let lastTime = performance.now();
+    function loop(currentTime) {
+        const delta = (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+
+        if (isPlaying) {
+            // Apply playback speed modifier instead of strictly playing 1:1 real-time
+            exactStep += (delta * playbackSpeed) / dt;
+            currentStep = Math.floor(exactStep);
+
+            if (currentStep >= totalSteps - 1) {
+                currentStep = totalSteps - 1;
+                exactStep = currentStep;
+                isPlaying = false;
+                btnPlay.textContent = 'Play';
+            }
+        } else {
+            // Ensure float tracker stays in sync if manually scrubbed while paused
+            exactStep = currentStep;
+        }
+
+        scrubber.value = (currentStep / (totalSteps - 1)) * 1000;
+        const currentTimeSec = (currentStep * dt).toFixed(2);
+        timeReadout.textContent = `t = ${currentTimeSec}s / ${totalTime.toFixed(2)}s`;
+
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+</script>
+</body>
+</html>
