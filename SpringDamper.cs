@@ -349,7 +349,7 @@ public partial class SpringDamper : Node3D
     {
         _anchor = new RigidBody3D { Freeze = true };
         AddChild(_anchor);
-        CreateMeshShape(_anchor, Colors.Gray, 2.0f);
+        CreateMeshShape(_anchor, Colors.Gray, 3.0f);
 
         _bob = new RigidBody3D
         {
