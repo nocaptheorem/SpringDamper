@@ -62,7 +62,9 @@ The physical simulation consists of a dynamically generated, frozen kinematic an
 * **Damping & Collisions:** Both linear and angular damping are strictly set to zero (`DampMode.Replace`) to ensure the system loses energy only through explicitly programmed restorative forces.
 * **Force Application:** The orchestrator evaluates the vector between the anchor and bob each physics frame, applying a continuous force according to a damped harmonic oscillator model (Hooke's Law with velocity damping):
 
-$$\mathbf{F}_{\text{total}} = -k(\Vert{}\mathbf{p}_{\text{bob}} - \mathbf{p}_{\text{anchor}}\Vert{} - L_{\text{rest}}) \cdot \mathbf{\hat{d}} - c (\mathbf{v}_{\text{bob}} \cdot \mathbf{\hat{d}}) \cdot \mathbf{\hat{d}}$$
+$$\mathbf{F}_{\mathrm{total}} =
+-k(\Vert{}\mathbf{p}_{\mathrm{bob}} - \mathbf{p}_{\mathrm{anchor}}\Vert{} -
+L_{\mathrm{rest}}) \cdot \mathbf{\hat{d}} - c (\mathbf{v}_{\mathrm{bob}} \cdot \mathbf{\hat{d}}) \cdot \mathbf{\hat{d}}$$
 
 Where $k$ is the `SpringStiffness` (default 300.0) and $c$ is the `SpringDamping` (default 1.0).
 
@@ -74,16 +76,19 @@ To dynamically position and rotate these segments along a parametric helix, the 
 
 1. **Direction Vector (Y-Axis):**
 
-$$\mathbf{y} = \frac{\mathbf{p}_{\text{end}} - \mathbf{p}_{\text{start}}}{\Vert{}\mathbf{p}_{\text{end}} - \mathbf{p}_{\text{start}}\Vert{}}$$
+$$\mathbf{y} = \frac{\mathbf{p}_{\mathrm{end}} -
+\mathbf{p}_{\mathrm{start}}}{\Vert{}\mathbf{p}_{\mathrm{end}} - \mathbf{p}_{\mathrm{start}}\Vert{}}$$
 
 2. **Singularity Handling (Gimbal Lock Prevention):**
 If the computed direction aligns perfectly with the global `Vector3.Up` (evaluated via dot product $> 0.99$), cross-product operations will yield a zero-vector. The system catches this and dynamically pivots the reference axis to `Vector3.Right`:
 
-$$\mathbf{v}_{\text{ref}} = \begin{cases} \text{Right}, & \text{if } \vert{}\mathbf{y} \cdot \text{Up}\vert{} > 0.99 \\ \text{Up}, & \text{otherwise} \end{cases}$$
+$$\mathbf{v}_{\mathrm{ref}} =
+\begin{cases} \mathrm{Right}, & \mathrm{if } \vert{}\mathbf{y} \cdot \mathrm{Up}\vert{} > 0.99 \\ \mathrm{Up}, & \mathrm{otherwise}
+\end{cases}$$
 
 3. **Orthogonal Construction:**
 
-$$\mathbf{x} = \frac{\mathbf{y} \times \mathbf{v}_{\text{ref}}}{\Vert{}\mathbf{y} \times \mathbf{v}_{\text{ref}}\Vert{}}$$
+$$\mathbf{x} = \frac{\mathbf{y} \times \mathbf{v}_{\mathrm{ref}}}{\Vert{}\mathbf{y} \times \mathbf{v}_{\mathrm{ref}}\Vert{}}$$
 
 $$\mathbf{z} = \frac{\mathbf{x} \times \mathbf{y}}{\Vert{}\mathbf{x} \times \mathbf{y}\Vert{}}$$
 
@@ -93,11 +98,13 @@ The orchestrator bypasses standard UI nodes, opting to stream continuous JSON ph
 
 1. **Kinetic Energy:**
 
-$$T = \frac{1}{2} m \Vert{}\mathbf{v}_{\text{bob}}\Vert{}^2$$
+$$T = \frac{1}{2} m \Vert{}\mathbf{v}_{\mathrm{bob}}\Vert{}^2$$
 
 2. **Total Potential Energy:** Derived from both gravitational potential (relative to the anchor) and elastic potential:
 
-$$V = m g (\mathbf{p}_{\text{bob}_y} - \mathbf{p}_{\text{anchor}_y}) + \frac{1}{2} k (\Vert{}\mathbf{p}_{\text{bob}} - \mathbf{p}_{\text{anchor}}\Vert{} - L_{\text{rest}})^2$$
+$$V = m g (\mathbf{p}_{\mathrm{bob}_y} -
+\mathbf{p}_{\mathrm{anchor}_y}) + \frac{1}{2} k (\Vert{}\mathbf{p}_{\mathrm{bob}} - \mathbf{p}_{\mathrm{anchor}}\Vert{} -
+L_{\mathrm{rest}})^2$$
 
 This ensures the user can track total mechanical energy and the Lagrangian ($T - V$) across the simulation lifespan.
 
@@ -112,4 +119,4 @@ This ensures the user can track total mechanical energy and the Lagrangian ($T -
 |  | `SPACE` / `CTRL` | Ascend / Descend |
 |  | `SHIFT` | Sprint (2.5x speed multiplier) |
 | **System** | `ESC` | Toggle Mouse Capture Mode |
-|  | `MOUSE MOTION` | Pitch/Yaw Camera Rotation |
+|          | `MOUSE MOTION` | Pitch/Yaw Camera Rotation |
