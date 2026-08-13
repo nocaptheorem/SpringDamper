@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Equivalent PD Settling: Linear Mass vs. Torsional Pendulum</title>
+
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
+    <!-- KaTeX JS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <!-- Auto-render extension -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+      onload="renderMathInElement(document.body);"></script>
+
     <style>
         :root {
             --bg: #0f172a;
@@ -204,19 +215,6 @@
             color: #e2e8f0;
         }
 
-        .math-expr {
-            font-style: italic;
-            letter-spacing: 0.02em;
-        }
-
-        .math-expr sub {
-            font-size: 0.7em;
-            font-style: normal;
-            margin-left: -0.05em;
-            vertical-align: -0.2em;
-            line-height: 0;
-        }
-
         .math-divider {
             color: var(--text-muted);
             font-family: sans-serif;
@@ -231,11 +229,11 @@
         <h1>Linear & Rotational Equivalence: Spring-Damper Settling</h1>
         <div class="header-math-container">
             <div class="math-badge">
-                <span class="math-expr">F<sub>total</sub> = F<sub>p</sub> + F<sub>d</sub></span>
+              <span>$$F_{\text{total}} = F_p + F_d$$</span>
             </div>
             <span class="math-divider">is mathematically identical to</span>
             <div class="math-badge">
-                <span class="math-expr">τ<sub>total</sub> = τ<sub>p</sub> + τ<sub>d</sub></span>
+                <span>$$\tau_{\text{total}} = \tau_p + \tau_d$$</span>
             </div>
         </div>
     </header>
@@ -259,15 +257,14 @@
     </div>
 
     <!-- Physical / Control Parameters -->
-    <div class="controls">
         <div class="control-group">
             <div class="label-row">
-                <span class="param-name">Stiffness (K)</span>
+                <span class="param-name">Stiffness (k)</span>
                 <span class="param-value" id="valKp">10.0</span>
             </div>
             <input type="range" id="sliderKp" min="0" max="150" step="1" value="10">
             <div class="math-badge">
-              <span class="math-expr">F<sub>p</sub> = k·(x<sub>setpoint</sub> − x<sub>actual</sub>)</span>
+              <span>$$F_p = k \cdot (x_{\text{setpoint}} - x_{\text{actual}})$$</span>
             </div>
         </div>
 
@@ -278,7 +275,7 @@
             </div>
             <input type="range" id="sliderKd" min="0" max="15" step="0.1" value="2">
             <div class="math-badge">
-              <span class="math-expr">F<sub>d</sub> = −c·v<sub>actual</sub></span>
+              <span>$$F_d = -c \cdot v_{\text{actual}}$$</span>
             </div>
         </div>
     </div>

@@ -1,12 +1,12 @@
 // @ts-check
 
 const canvas = /** @type {HTMLCanvasElement} */
-              (document.getElementById('simCanvas'));
+               (document.getElementById('simCanvas'));
 
 const ctx = canvas.getContext('2d');
 
 const sliderKp = /** @type {HTMLInputElement} */
-                (document.getElementById('sliderKp'));
+                 (document.getElementById('sliderKp'));
 
 const sliderKd = /** @type {HTMLInputElement} */
                  (document.getElementById('sliderKd'));
@@ -22,7 +22,7 @@ const timeReadout = document.getElementById('timeReadout');
 
 // Physical & Simulation Constants
 const m = 1.0;            // Mass (kg) / Inertia (I)
-const totalTime = 60.0;   // Extended to 1 minute
+const totalTime = 60.0;   // 1 minute
 const dt = 0.01;          // Time step (100 Hz simulation resolution)
 const totalSteps = Math.floor(totalTime / dt);
 const setpoint = 1.0;
@@ -34,7 +34,7 @@ let currentStep = 0;
 
 // Float tracker to allow for fractional playback speeds
 let exactStep = 0;
-const playbackSpeed = 0.5; // 0.5 = Half speed. Change to 0.25 for quarter speed, etc.
+const playbackSpeed = 0.1; // 0.5 = Half speed. Change to 0.25 for quarter speed, etc.
 
 // Pre-allocated array for fixed time window trajectories
 let trajectory = new Array(totalSteps);
