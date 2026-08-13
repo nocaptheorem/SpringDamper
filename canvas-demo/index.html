@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equivalent PD Settling: Linear Mass vs. Torsional Pendulum</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --secondary: #f43f5e;
+            --border: #334155;
+            --accent: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-math-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: #020617;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Scrubbing Bar Section */
+        .timeline-section {
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .timeline-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Control Sliders & Buttons */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .param-name {
+            font-weight: 500;
+        }
+
+        .param-value {
+            font-family: monospace;
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        #scrubber::-webkit-slider-thumb {
+            background: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--primary);
+            color: #020617;
+            border: none;
+            padding: 8px 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        button.secondary {
+            background: #334155;
+            color: var(--text);
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* HTML/CSS LaTeX-style badges */
+        .math-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-family: "Georgia", "Cambria", "Times New Roman", Times, serif;
+            font-size: 0.95rem;
+            background: #0f172a;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            color: #e2e8f0;
+        }
+
+        .math-expr {
+            font-style: italic;
+            letter-spacing: 0.02em;
+        }
+
+        .math-expr sub {
+            font-size: 0.7em;
+            font-style: normal;
+            margin-left: -0.05em;
+            vertical-align: -0.2em;
+            line-height: 0;
+        }
+
+        .math-divider {
+            color: var(--text-muted);
+            font-family: sans-serif;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Linear & Rotational Equivalence: Spring-Damper Settling</h1>
+        <div class="header-math-container">
+            <div class="math-badge">
+                <span class="math-expr">F<sub>total</sub> = F<sub>p</sub> + F<sub>d</sub></span>
+            </div>
+            <span class="math-divider">is mathematically identical to</span>
+            <div class="math-badge">
+                <span class="math-expr">τ<sub>total</sub> = τ<sub>p</sub> + τ<sub>d</sub></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="canvas-container">
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <!-- Timeline / Manual Scroll Section -->
+    <div class="timeline-section">
+        <div class="btn-group">
+            <button id="btnPlay">Pause</button>
+            <button id="btnReset" class="secondary">Reset</button>
+        </div>
+        <div class="timeline-container">
+            <div class="timeline-label">
+                <span id="timeReadout">t = 0.00s / 60.00s</span>
+            </div>
+            <input type="range" id="scrubber" min="0" max="1000" value="0">
+        </div>
+    </div>
+
+    <!-- Physical / Control Parameters -->
+    <div class="controls">
+        <div class="control-group">
+            <div class="label-row">
+                <span class="param-name">Stiffness (K)</span>
+                <span class="param-value" id="valKp">10.0</span>
+            </div>
+            <input type="range" id="sliderKp" min="0" max="150" step="1" value="10">
+            <div class="math-badge">
+              <span class="math-expr">F<sub>p</sub> = k·(x<sub>setpoint</sub> − x<sub>actual</sub>)</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="label-row">
+                <span class="param-name">Damping (c)</span>
+                <span class="param-value" id="valKd">2.0</span>
+            </div>
+            <input type="range" id="sliderKd" min="0" max="15" step="0.1" value="2">
+            <div class="math-badge">
+              <span class="math-expr">F<sub>d</sub> = −c·v<sub>actual</sub></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="springdamper.js"></script>
+
+</body>
+</html>
